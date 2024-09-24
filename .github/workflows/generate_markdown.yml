@@ -23,6 +23,7 @@ jobs:
         pip install -r requirements.txt
         pip install openai>=1.0.0
         pip install python-wordpress-xmlrpc
+        pip install aiohttp
 
     - name: Generate Markdown
       env:

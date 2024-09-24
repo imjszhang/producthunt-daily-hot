@@ -1,19 +1,11 @@
 import os
-# from dotenv import load_dotenv
-import requests
+import aiohttp
+import asyncio
 import json
 from typing import List, Tuple
 from datetime import datetime, timedelta, timezone
-from openai import OpenAI
 from bs4 import BeautifulSoup
 import pytz
-import asyncio
-
-# 加载 .env 文件
-# load_dotenv()
-
-# 创建 OpenAI 客户端实例
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 DIFY_API_BASE_URL = os.getenv('DIFY_API_BASE_URL')
 DIFY_API_KEY = os.getenv('DIFY_API_KEY')
@@ -22,7 +14,7 @@ producthunt_client_id = os.getenv('PRODUCTHUNT_CLIENT_ID')
 producthunt_client_secret = os.getenv('PRODUCTHUNT_CLIENT_SECRET')
 
 class Product:
-    async def __init__(self, id: str, name: str, tagline: str, description: str, votesCount: int, createdAt: str, featuredAt: str, website: str, url: str, **kwargs):
+    def __init__(self, id: str, name: str, tagline: str, description: str, votesCount: int, createdAt: str, featuredAt: str, website: str, url: str, **kwargs):
         self.name = name
         self.tagline = tagline
         self.description = description
@@ -32,9 +24,9 @@ class Product:
         self.website = website
         self.url = url
         self.og_image_url = self.fetch_og_image_url()
-        self.keyword = await self.generate_keywords()
-        self.translated_tagline = await self.translate_text(self.tagline)
-        self.translated_description = await self.translate_text(self.description)
+        self.keyword = None
+        self.translated_tagline = None
+        self.translated_description = None
 
     def fetch_og_image_url(self) -> str:
         """获取产品的Open Graph图片URL"""
@@ -51,47 +43,22 @@ class Product:
         prompt = f"根据以下内容生成适合的中文关键词，用英文逗号分隔开：\n\n产品名称：{self.name}\n\n标语：{self.tagline}\n\n描述：{self.description}"
         
         try:
-            """
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "Generate suitable Chinese keywords based on the product information provided. The keywords should be separated by commas."},
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=50,
-                temperature=0.7,
-            )
-            keywords = response.choices[0].message.content.strip()
-            """
             inputs = json.dumps({"system_prompt": "Generate suitable Chinese keywords based on the product information provided. The keywords should be separated by commas."})
-            response = await call_dify_app(DIFY_API_KEY,prompt,"",inputs,"","blocking")
+            response, _ = await call_dify_app_async(DIFY_API_KEY, prompt, "", inputs, "", "blocking")
             keywords = response.strip()
             if ',' not in keywords:
                 keywords = ', '.join(keywords.split())
-            return keywords
+            self.keyword = keywords
         except Exception as e:
             print(f"Error occurred during keyword generation: {e}")
-            return "无关键词"
+            self.keyword = "无关键词"
 
     async def translate_text(self, text: str) -> str:
         """使用OpenAI翻译文本内容"""
         try:
-            """
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "你是世界上最专业的翻译工具，擅长英文和中文互译。你是一位精通英文和中文的专业翻译，尤其擅长将IT公司黑话和专业词汇翻译成简洁易懂的地道表达。你的任务是将以下内容翻译成地道的中文，风格与科普杂志或日常对话相似。"},
-                    {"role": "user", "content": text},
-                ],
-                max_tokens=500,
-                temperature=0.7,
-            )
-            translated_text = response.choices[0].message.content.strip()
-            """
             inputs = json.dumps({"system_prompt": "你是世界上最专业的翻译工具，擅长英文和中文互译。你是一位精通英文和中文的专业翻译，尤其擅长将IT公司黑话和专业词汇翻译成简洁易懂的地道表达。你的任务是将以下内容翻译成地道的中文，风格与科普杂志或日常对话相似。"})
-            response = await call_dify_app(DIFY_API_KEY,text,"",inputs,"","blocking")
-            translated_text = response.strip()
-            return translated_text
+            response, _ = await call_dify_app_async(DIFY_API_KEY, text, "", inputs, "", "blocking")
+            return response.strip()
         except Exception as e:
             print(f"Error occurred during translation: {e}")
             return text
@@ -120,7 +87,74 @@ class Product:
             f"---\n\n"
         )
 
-async def get_producthunt_token():
+async def send_chat_message_async(base_url: str, api_key: str, query: str, user: str, conversation_id: str, inputs={}, files: List[dict] = [], response_mode="streaming") -> Tuple[str, str]:
+    url = f"{base_url}/chat-messages"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "query": query,
+        "response_mode": response_mode,
+        "user": user,
+        "conversation_id": conversation_id or "",
+        "inputs": inputs,
+        "files": files
+    }
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, headers=headers, json=payload) as response:
+                if response.status != 200:
+                    raise aiohttp.ClientError(f"Request failed with status code {response.status}: {await response.text()}")
+
+                if response_mode == "blocking":
+                    return await handle_blocking_response_async(response, conversation_id)
+                elif response_mode == "streaming":
+                    return await handle_streaming_response_async(response, conversation_id)
+
+        except Exception as e:
+            print(f"Error in send_chat_message_async: {e}")
+            return "", conversation_id
+
+async def handle_blocking_response_async(response: aiohttp.ClientResponse, conversation_id: str) -> Tuple[str, str]:
+    try:
+        response_json = await response.json()
+        result = response_json.get("answer", "")
+        conversation_id = response_json.get("conversation_id", conversation_id)  # Use the passed conversation_id if not present in response
+        return result, conversation_id
+    except aiohttp.ClientError:
+        raise aiohttp.ClientError("Failed to parse response JSON")
+
+async def handle_streaming_response_async(response: aiohttp.ClientResponse, conversation_id: str) -> Tuple[str, str]:
+    result = ""
+    async for line in response.content:
+        decoded_line = line.decode('utf-8')
+        if decoded_line.startswith("data:"):
+            data = decoded_line[5:].strip()
+            try:
+                chunk = json.loads(data)
+                answer = chunk.get("answer", "")
+                conversation_id = chunk.get("conversation_id", conversation_id)  # Use the passed conversation_id if not present in response
+                result += answer
+            except json.JSONDecodeError:
+                continue
+    return result, conversation_id
+
+async def call_dify_app_async(api_key, content, conversation_id, inputs, files, response_mode="blocking"):
+    base_url = DIFY_API_BASE_URL
+    user = "dify_api"
+    if not inputs:
+        inputs = "[]"
+    if not files:
+        files = "[]"
+    if not conversation_id: conversation_id = ""
+    inputs = json.loads(inputs)
+    files = json.loads(files)
+    result, conversation_id = await send_chat_message_async(base_url, api_key, content, user=user, conversation_id=conversation_id, inputs=inputs, files=files, response_mode=response_mode)
+    return result, conversation_id
+
+def get_producthunt_token():
     """通过 client_id 和 client_secret 获取 Product Hunt 的 access_token"""
     url = "https://api.producthunt.com/v2/oauth/token"
     payload = {
@@ -141,9 +175,9 @@ async def get_producthunt_token():
     token = response.json().get("access_token")
     return token
 
-async def fetch_product_hunt_data():
+def fetch_product_hunt_data():
     """从Product Hunt获取前一天的Top 30数据"""
-    token = await get_producthunt_token()
+    token = get_producthunt_token()
     yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     date_str = yesterday.strftime('%Y-%m-%d')
     url = "https://api.producthunt.com/v2/api/graphql"
@@ -192,7 +226,7 @@ async def fetch_product_hunt_data():
     # 只保留前30个产品
     return [Product(**post) for post in sorted(all_posts, key=lambda x: x['votesCount'], reverse=True)[:30]]
 
-async def generate_markdown(products, date_str):
+def generate_markdown(products, date_str):
     """生成Markdown内容并保存到data目录"""
     # 获取今天的日期并格式化
     today = datetime.now(timezone.utc)
@@ -213,88 +247,25 @@ async def generate_markdown(products, date_str):
         file.write(markdown_content)
     print(f"文件 {file_name} 生成成功并已覆盖。")
 
-
-
-async def send_chat_message(base_url: str, api_key: str, query: str, user: str, conversation_id: str, inputs={}, files: List[dict] = [], response_mode="streaming") -> Tuple[str, str]:
-    url = f"{base_url}/chat-messages"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "query": query,
-        "response_mode": response_mode,
-        "user": user,
-        "conversation_id": conversation_id or "",
-        "inputs": inputs,
-        "files": files
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=payload, stream=(response_mode == "streaming"))
-
-        if response.status_code != 200:
-            raise requests.HTTPError(f"Request failed with status code {response.status_code}: {response.text}")
-
-        if response_mode == "blocking":
-            return handle_blocking_response(response, conversation_id)
-        elif response_mode == "streaming":
-            return handle_streaming_response(response, conversation_id)
-
-    except Exception as e:
-        print(f"Error in send_chat_message: {e}")
-        return "", conversation_id
-
-def handle_blocking_response(response: requests.Response, conversation_id: str) -> Tuple[str, str]:
-    try:
-        response_json = response.json()
-        result = response_json.get("answer", "")
-        conversation_id = response_json.get("conversation_id", conversation_id)  # Use the passed conversation_id if not present in response
-        return result, conversation_id
-    except json.JSONDecodeError:
-        raise requests.HTTPError("Failed to parse response JSON")
-
-def handle_streaming_response(response: requests.Response, conversation_id: str) -> Tuple[str, str]:
-    result = ""
-    for line in response.iter_lines():
-        if line:
-            decoded_line = line.decode('utf-8')
-            if decoded_line.startswith("data:"):
-                data = decoded_line[5:].strip()
-                try:
-                    chunk = json.loads(data)
-                    answer = chunk.get("answer", "")
-                    conversation_id = chunk.get("conversation_id", conversation_id)  # Use the passed conversation_id if not present in response
-                    result += answer
-                except json.JSONDecodeError:
-                    continue
-    return result, conversation_id
-
-
-async def call_dify_app(api_key,content,conversation_id, inputs,files,response_mode="blocking"):
-    base_url = DIFY_API_BASE_URL
-    user = "dify_api"
-    if not inputs:
-        inputs = "[]"
-    if not files:
-        files = "[]"
-    if not conversation_id: conversation_id = ""
-    inputs = json.loads(inputs)
-    files = json.loads(files)  
-    result,conversation_id = await send_chat_message(base_url, api_key, content, user=user,conversation_id=conversation_id, inputs=inputs, files=files,response_mode=response_mode)  
-    return result,conversation_id
-
-
 async def main():
     # 获取昨天的日期并格式化
     yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     date_str = yesterday.strftime('%Y-%m-%d')
 
     # 获取Product Hunt数据
-    products = await fetch_product_hunt_data()
+    products = fetch_product_hunt_data()
+
+    # 异步生成关键词和翻译
+    tasks = []
+    for product in products:
+        tasks.append(product.generate_keywords())
+        tasks.append(product.translate_text(product.tagline))
+        tasks.append(product.translate_text(product.description))
+
+    await asyncio.gather(*tasks)
 
     # 生成Markdown文件
-    await generate_markdown(products, date_str)
+    generate_markdown(products, date_str)
 
 if __name__ == "__main__":
     asyncio.run(main())
