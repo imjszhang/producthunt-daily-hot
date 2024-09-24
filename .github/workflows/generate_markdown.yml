@@ -23,9 +23,6 @@ jobs:
         pip install -r requirements.txt
         pip install openai>=1.0.0
         pip install python-wordpress-xmlrpc
-        pip install aiofiles
-        pip install aiohttp
-        pip install asyncio
 
     - name: Generate Markdown
       env:
