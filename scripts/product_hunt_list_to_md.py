@@ -21,7 +21,7 @@ producthunt_client_id = os.getenv('PRODUCTHUNT_CLIENT_ID')
 producthunt_client_secret = os.getenv('PRODUCTHUNT_CLIENT_SECRET')
 
 class Product:
-    def __init__(self, id: str, name: str, tagline: str, description: str, votesCount: int, createdAt: str, featuredAt: str, website: str, url: str, **kwargs):
+    async def __init__(self, id: str, name: str, tagline: str, description: str, votesCount: int, createdAt: str, featuredAt: str, website: str, url: str, **kwargs):
         self.name = name
         self.tagline = tagline
         self.description = description
@@ -31,9 +31,9 @@ class Product:
         self.website = website
         self.url = url
         self.og_image_url = self.fetch_og_image_url()
-        self.keyword = self.generate_keywords()
-        self.translated_tagline = self.translate_text(self.tagline)
-        self.translated_description = self.translate_text(self.description)
+        self.keyword = await self.generate_keywords()
+        self.translated_tagline = await self.translate_text(self.tagline)
+        self.translated_description = await self.translate_text(self.description)
 
     def fetch_og_image_url(self) -> str:
         """获取产品的Open Graph图片URL"""
@@ -45,7 +45,7 @@ class Product:
                 return og_image["content"]
         return ""
 
-    def generate_keywords(self) -> str:
+    async def generate_keywords(self) -> str:
         """生成产品的关键词，显示在一行，用逗号分隔"""
         prompt = f"根据以下内容生成适合的中文关键词，用英文逗号分隔开：\n\n产品名称：{self.name}\n\n标语：{self.tagline}\n\n描述：{self.description}"
         
@@ -63,7 +63,7 @@ class Product:
             keywords = response.choices[0].message.content.strip()
             """
             inputs = json.dumps({"system_prompt": "Generate suitable Chinese keywords based on the product information provided. The keywords should be separated by commas."})
-            response = call_dify_app(DIFY_API_KEY,prompt,"",inputs,"","blocking")
+            response = await call_dify_app(DIFY_API_KEY,prompt,"",inputs,"","blocking")
             keywords = response.strip()
             if ',' not in keywords:
                 keywords = ', '.join(keywords.split())
@@ -72,7 +72,7 @@ class Product:
             print(f"Error occurred during keyword generation: {e}")
             return "无关键词"
 
-    def translate_text(self, text: str) -> str:
+    async def translate_text(self, text: str) -> str:
         """使用OpenAI翻译文本内容"""
         try:
             """
@@ -88,7 +88,7 @@ class Product:
             translated_text = response.choices[0].message.content.strip()
             """
             inputs = json.dumps({"system_prompt": "你是世界上最专业的翻译工具，擅长英文和中文互译。你是一位精通英文和中文的专业翻译，尤其擅长将IT公司黑话和专业词汇翻译成简洁易懂的地道表达。你的任务是将以下内容翻译成地道的中文，风格与科普杂志或日常对话相似。"})
-            response = call_dify_app(DIFY_API_KEY,text,"",inputs,"","blocking")
+            response = await call_dify_app(DIFY_API_KEY,text,"",inputs,"","blocking")
             translated_text = response.strip()
             return translated_text
         except Exception as e:
@@ -214,7 +214,7 @@ def generate_markdown(products, date_str):
 
 
 
-def send_chat_message(base_url: str, api_key: str, query: str, user: str, conversation_id: str, inputs={}, files: List[dict] = [], response_mode="streaming") -> Tuple[str, str]:
+async def send_chat_message(base_url: str, api_key: str, query: str, user: str, conversation_id: str, inputs={}, files: List[dict] = [], response_mode="streaming") -> Tuple[str, str]:
     url = f"{base_url}/chat-messages"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -270,7 +270,7 @@ def handle_streaming_response(response: requests.Response, conversation_id: str)
     return result, conversation_id
 
 
-def call_dify_app(api_key,content,conversation_id, inputs,files,response_mode="blocking"):
+async def call_dify_app(api_key,content,conversation_id, inputs,files,response_mode="blocking"):
     base_url = DIFY_API_BASE_URL
     user = "dify_api"
     if not inputs:
@@ -280,7 +280,7 @@ def call_dify_app(api_key,content,conversation_id, inputs,files,response_mode="b
     if not conversation_id: conversation_id = ""
     inputs = json.loads(inputs)
     files = json.loads(files)  
-    result,conversation_id = send_chat_message(base_url, api_key, content, user=user,conversation_id=conversation_id, inputs=inputs, files=files,response_mode=response_mode)  
+    result,conversation_id = await send_chat_message(base_url, api_key, content, user=user,conversation_id=conversation_id, inputs=inputs, files=files,response_mode=response_mode)  
     return result,conversation_id
 
 
