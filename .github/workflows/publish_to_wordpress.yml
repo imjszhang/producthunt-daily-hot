@@ -8,6 +8,8 @@ on:
 jobs:
   publish_to_wordpress:
     runs-on: ubuntu-latest
+    env:
+      PUBLISH_ENABLED: 'false'  # 设置环境变量
 
     steps:
     - name: Checkout repository
@@ -19,11 +21,13 @@ jobs:
         python-version: '3.x'
 
     - name: Install dependencies
+      if: ${{ env.PUBLISH_ENABLED == 'true' }}  
       run: |
         pip install requests
         pip install markdown 
 
     - name: Publish to WordPress
+      if: ${{ env.PUBLISH_ENABLED == 'true' }}  
       env:
         WORDPRESS_URL: ${{ secrets.WORDPRESS_URL }}
         WORDPRESS_USERNAME: ${{ secrets.WORDPRESS_USERNAME }}
