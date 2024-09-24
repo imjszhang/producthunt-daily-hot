@@ -60,10 +60,11 @@ class Product:
                 max_tokens=50,
                 temperature=0.7,
             )
+            keywords = response.choices[0].message.content.strip()
             """
             inputs = json.dumps({"system_prompt": "Generate suitable Chinese keywords based on the product information provided. The keywords should be separated by commas."})
             response = call_dify_app(DIFY_API_KEY,prompt,"",inputs,"","blocking")
-            keywords = response.choices[0].message.content.strip()
+            keywords = response.strip()
             if ',' not in keywords:
                 keywords = ', '.join(keywords.split())
             return keywords
@@ -84,10 +85,11 @@ class Product:
                 max_tokens=500,
                 temperature=0.7,
             )
+            translated_text = response.choices[0].message.content.strip()
             """
             inputs = json.dumps({"system_prompt": "你是世界上最专业的翻译工具，擅长英文和中文互译。你是一位精通英文和中文的专业翻译，尤其擅长将IT公司黑话和专业词汇翻译成简洁易懂的地道表达。你的任务是将以下内容翻译成地道的中文，风格与科普杂志或日常对话相似。"})
             response = call_dify_app(DIFY_API_KEY,text,"",inputs,"","blocking")
-            translated_text = response.choices[0].message.content.strip()
+            translated_text = response.strip()
             return translated_text
         except Exception as e:
             print(f"Error occurred during translation: {e}")

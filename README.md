@@ -57,6 +57,8 @@ pip install -r requirements.txt
    在您的 GitHub 仓库中添加以下 Secrets：
 
    - `OPENAI_API_KEY`: 您的 OpenAI API 密钥。
+   - `DIFY_API_BASE_URL`: DIFY API 的基础 URL，用于翻译产品描述。
+   - `DIFY_API_KEY`: DIFY API 密钥。
    - `PRODUCTHUNT_CLIENT_ID`: 您的 Product Hunt API 客户端 ID。
    - `PRODUCTHUNT_CLIENT_SECRET`: 您的 Product Hunt API 客户端密钥。
    - `PAT`: 用于推送更改到仓库的个人访问令牌。
