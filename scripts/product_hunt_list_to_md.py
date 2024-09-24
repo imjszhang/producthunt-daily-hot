@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from openai import OpenAI
 from bs4 import BeautifulSoup
 import pytz
+import asyncio
 
 # 加载 .env 文件
 # load_dotenv()
@@ -140,9 +141,9 @@ async def get_producthunt_token():
     token = response.json().get("access_token")
     return token
 
-def fetch_product_hunt_data():
+async def fetch_product_hunt_data():
     """从Product Hunt获取前一天的Top 30数据"""
-    token = get_producthunt_token()
+    token = await get_producthunt_token()
     yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     date_str = yesterday.strftime('%Y-%m-%d')
     url = "https://api.producthunt.com/v2/api/graphql"
@@ -191,7 +192,7 @@ def fetch_product_hunt_data():
     # 只保留前30个产品
     return [Product(**post) for post in sorted(all_posts, key=lambda x: x['votesCount'], reverse=True)[:30]]
 
-def generate_markdown(products, date_str):
+async def generate_markdown(products, date_str):
     """生成Markdown内容并保存到data目录"""
     # 获取今天的日期并格式化
     today = datetime.now(timezone.utc)
@@ -284,16 +285,16 @@ async def call_dify_app(api_key,content,conversation_id, inputs,files,response_m
     return result,conversation_id
 
 
-def main():
+async def main():
     # 获取昨天的日期并格式化
     yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     date_str = yesterday.strftime('%Y-%m-%d')
 
     # 获取Product Hunt数据
-    products = fetch_product_hunt_data()
+    products = await fetch_product_hunt_data()
 
     # 生成Markdown文件
-    generate_markdown(products, date_str)
+    await generate_markdown(products, date_str)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
