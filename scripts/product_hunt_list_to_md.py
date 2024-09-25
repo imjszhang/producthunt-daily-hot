@@ -63,6 +63,20 @@ class Product:
         except Exception as e:
             print(f"Error occurred during translation: {e}")
             return text
+        
+    async def translate_tagline(self) -> str:
+        try:
+            self.translated_tagline = await self.translate_text(self.tagline)
+        except Exception as e:
+            print(f"Error occurred during tagline translation: {e}")
+            self.translated_tagline = self.tagline
+
+    async def translate_description(self) -> str:
+        try:
+            self.translated_description = await self.translate_text(self.description)
+        except Exception as e:
+            print(f"Error occurred during description translation: {e}")
+            self.translated_description = self.description
 
     def convert_to_beijing_time(self, utc_time_str: str) -> str:
         """将UTC时间转换为北京时间"""
@@ -260,8 +274,8 @@ async def main():
     tasks = []
     for product in products:
         tasks.append(product.generate_keywords())
-        tasks.append(product.translate_text(product.tagline))
-        tasks.append(product.translate_text(product.description))
+        tasks.append(product.translate_tagline())
+        tasks.append(product.translate_description())
 
     await asyncio.gather(*tasks)
 
