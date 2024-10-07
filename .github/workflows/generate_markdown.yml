@@ -21,19 +21,16 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install openai>=1.0.0
-        pip install python-wordpress-xmlrpc
         pip install aiohttp
 
     - name: Generate Markdown
       env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         DIFY_API_KEY: ${{ secrets.DIFY_API_KEY }}
         DIFY_API_BASE_URL: ${{ secrets.DIFY_API_BASE_URL }}
         PRODUCTHUNT_CLIENT_ID: ${{ secrets.PRODUCTHUNT_CLIENT_ID }}
         PRODUCTHUNT_CLIENT_SECRET: ${{ secrets.PRODUCTHUNT_CLIENT_SECRET }}
       run: |
-        python scripts/product_hunt_list_to_md.py
+        python scripts/product_hunt_list_to_md_by_dify.py
 
     - name: Commit files
       run: |
