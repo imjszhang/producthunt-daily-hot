@@ -1,4 +1,4 @@
-# Product Hunt 每日中文热榜
+# Product Hunt 每日中文热榜 - 自动更新到飞书多维表格
 
 [English](README.en.md) | [中文](README.md)
 
@@ -6,7 +6,9 @@
 
 Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它能够每天定时生成 Product Hunt 上的热门产品榜单 Markdown 文件，并自动提交到 GitHub 仓库中。该项目旨在帮助用户快速查看每日的 Product Hunt 热门榜单，并提供更详细的产品信息。
 
-榜单会在每天下午4点自动更新，可以在 [🌐 这里查看](https://decohack.com/category/producthunt/)。
+在原项目基础上,增加了自动更新到飞书多维表格的功能, 以及支持调用Dify的API来替代OPENAI的API。
+
+榜单会在每天下午3点自动更新，可以在 [🌐 这里查看](https://decohack.com/category/producthunt/)。
 
 ## 预览
 
@@ -22,6 +24,7 @@ Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它�
 - **可配置工作流**：支持手动触发或通过 GitHub Actions 定时生成内容。
 - **灵活定制**：脚本易于扩展或修改，可以包括额外的产品细节或调整文件格式。
 - **自动发布到 WordPress**：生成的 Markdown 文件可以自动发布到 WordPress 网站。
+- **自动更新到飞书多维表格**：生成的 Markdown 文件可以自动更新到飞书多维表格。
 
 ## 快速开始
 
@@ -29,7 +32,7 @@ Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它�
 
 - Python 3.x
 - GitHub 账户及仓库
-- OpenAI API Key
+- OpenAI API Key 或者 Dify的API
 - Product Hunt API 凭证
 - WordPress 网站及凭证（用于自动发布）
 
@@ -38,7 +41,7 @@ Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它�
 1. **克隆仓库：**
 
 ```bash
-git clone https://github.com/ViggoZ/producthunt-daily-hot.git
+git clone https://github.com/imjszhang/producthunt-daily-hot.git
 cd producthunt-daily-hot
 ```
 
@@ -57,7 +60,7 @@ pip install -r requirements.txt
    在您的 GitHub 仓库中添加以下 Secrets：
 
    - `OPENAI_API_KEY`: 您的 OpenAI API 密钥。
-   - `DIFY_API_BASE_URL`: DIFY API 的基础 URL，用于翻译产品描述。
+   - `DIFY_API_BASE_URL`: DIFY API 的网址 URL。
    - `DIFY_API_KEY`: DIFY API 密钥。
    - `PRODUCTHUNT_CLIENT_ID`: 您的 Product Hunt API 客户端 ID。
    - `PRODUCTHUNT_CLIENT_SECRET`: 您的 Product Hunt API 客户端密钥。
@@ -65,18 +68,27 @@ pip install -r requirements.txt
    - `WORDPRESS_URL`: 您的 WordPress 网站 URL。
    - `WORDPRESS_USERNAME`: 您的 WordPress 用户名。
    - `WORDPRESS_PASSWORD`: 您的 WordPress 密码。
+   - `FEISHU_APP_ID`: 飞书应用的 App
+   - `FEISHU_APP_SECRET`: 飞书应用的 Secret
+   - `FEISHU_BITABLE_APP_TOKEN`: 飞书多维表格的APP Token
+   - `FEISHU_BITABLE_TABLE_ID`: 飞书多维表格的TABLE ID
+
 
 2. **GitHub Actions 工作流：**
 
-   工作流定义在 `.github/workflows/generate_markdown.yml` 和 `.github/workflows/publish_to_wordpress.yml` 中。该工作流每天 UTC 时间 07:01（北京时间 15:01）自动运行，也可以手动触发。
+   工作流定义在 `.github/workflows/` 中。
+   - `generate_markdown.yml`：生成 Product Hunt 每日热门产品的 Markdown 文件。该工作流每天 UTC 时间 07:01（北京时间 15:01）自动运行，也可以手动触发。
+   - `publish_to_wordpress.yml`：自动发布 Markdown 文件到 WordPress 网站。在generate_markdown之后触发，可在里面配置是否启用。
+   - `publish_to_feishubitable.yml`：自动发布到飞书多维表格。在generate_markdown之后触发，可在里面配置是否启用。processed_records.json里已存在产品将不会重复发布。
 
 ### 使用
 
-设置完成后，GitHub Action 将自动生成并提交包含 Product Hunt 每日热门产品的 Markdown 文件，并自动发布到 WordPress 网站。文件存储在 `data/` 目录下。
+设置完成后，GitHub Action 将自动生成并提交包含 Product Hunt 每日热门产品的 Markdown 文件，并自动发布到 WordPress 网站和飞书多维表格。文件存储在 `data/` 目录下。
 
 ### 自定义
 
-- 您可以修改 `scripts/product_hunt_list_to_md.py` 文件来自定义生成文件的格式或添加额外内容。
+- 您可以修改 `scripts/product_hunt_list_to_md.py` 文件来自定义生成文件的格式或添加额外内容。这个是openai的API的版本。
+- 您可以修改 `scripts/product_hunt_list_to_md_dify.py` 文件来自定义生成文件的格式或添加额外内容。这个是dify的API的版本。
 - 如果需要，可以在 `.github/workflows/generate_markdown.yml` 中调整定时任务的运行时间。
 
 ### 示例输出
