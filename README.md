@@ -8,7 +8,7 @@ Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它�
 
 在原项目基础上,增加了自动更新到飞书多维表格的功能, 以及支持调用Dify的API来替代OPENAI的API。
 
-榜单会在每天下午3点自动更新，可以在 [🌐 这里查看](https://decohack.com/category/producthunt/)。
+榜单会在每天下午3点自动更新，可以在 [🌐 这里查看](https://sxwqam5d2bh.feishu.cn/docx/S2mTdzFrToxGSjx4aAgc4fDBnjb?from=from_copylink)。
 
 ## 预览
 
@@ -59,15 +59,15 @@ pip install -r requirements.txt
 
    在您的 GitHub 仓库中添加以下 Secrets：
 
-   - `OPENAI_API_KEY`: 您的 OpenAI API 密钥。
+   - `OPENAI_API_KEY`: OpenAI API 密钥。
    - `DIFY_API_BASE_URL`: DIFY API 的网址 URL。
    - `DIFY_API_KEY`: DIFY API 密钥。
-   - `PRODUCTHUNT_CLIENT_ID`: 您的 Product Hunt API 客户端 ID。
-   - `PRODUCTHUNT_CLIENT_SECRET`: 您的 Product Hunt API 客户端密钥。
+   - `PRODUCTHUNT_CLIENT_ID`: Product Hunt API 客户端 ID。
+   - `PRODUCTHUNT_CLIENT_SECRET`: Product Hunt API 客户端密钥。
    - `PAT`: 用于推送更改到仓库的个人访问令牌。
-   - `WORDPRESS_URL`: 您的 WordPress 网站 URL。
-   - `WORDPRESS_USERNAME`: 您的 WordPress 用户名。
-   - `WORDPRESS_PASSWORD`: 您的 WordPress 密码。
+   - `WORDPRESS_URL`: WordPress 网站 URL。
+   - `WORDPRESS_USERNAME`: WordPress 用户名。
+   - `WORDPRESS_PASSWORD`: WordPress 密码。
    - `FEISHU_APP_ID`: 飞书应用的 App
    - `FEISHU_APP_SECRET`: 飞书应用的 Secret
    - `FEISHU_BITABLE_APP_TOKEN`: 飞书多维表格的APP Token

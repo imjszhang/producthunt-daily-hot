@@ -8,7 +8,7 @@ Product Hunt Daily Hot is a GitHub Action-based automation tool that generates a
 
 In this enhanced version, we have added the ability to automatically update the data to Feishu Bitable and support for using Dify's API as an alternative to OpenAI's API.
 
-The leaderboard is automatically updated daily at 3:00 PM Beijing Time. You can view it [🌐 here](https://decohack.com/category/producthunt/).
+The leaderboard is automatically updated daily at 3:00 PM Beijing Time. You can view it [🌐 here](https://sxwqam5d2bh.feishu.cn/docx/S2mTdzFrToxGSjx4aAgc4fDBnjb?from=from_copylink).
 
 ## Preview
 
