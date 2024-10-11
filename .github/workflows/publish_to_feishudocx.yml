@@ -26,6 +26,7 @@ jobs:
         pip install aiohttp
         pip install python-dotenv
         pip install pytz
+        pip install requests
 
     - name: Publish to Feishu Document
       if: ${{ env.PUBLISH_ENABLED == 'true' }}  
