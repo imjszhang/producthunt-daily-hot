@@ -1,0 +1,37 @@
+name: Publish to Feishu Document
+
+on:
+  workflow_run:
+    workflows: ["Generate Daily Markdown"]
+    types: [completed]
+
+jobs:
+  publish_to_feishu_bitable:
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH_ENABLED: 'true'  # 设置环境变量，控制是否启用发布
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      if: ${{ env.PUBLISH_ENABLED == 'true' }}  
+      run: |
+        pip install aiohttp
+        pip install python-dotenv
+        pip install pytz
+
+    - name: Publish to Feishu Document
+      if: ${{ env.PUBLISH_ENABLED == 'true' }}  
+      env:
+        FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+        FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        FEISHU_DOCX_FOLDER_TOKEN: ${{ secrets.FEISHU_DOCX_FOLDER_TOKEN }}
+      run: |
+        python scripts/publish_to_feishudocx.py

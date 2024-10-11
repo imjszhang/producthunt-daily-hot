@@ -5,7 +5,7 @@ import pytz
 from feishu_docx_api_handler import FeishuDocxAPIHandler, BlockType, BlockFactory
 import os
 from dotenv import load_dotenv
-load_dotenv(override=True)
+#load_dotenv(override=True)
 
 FEISHU_APP_ID = os.getenv('FEISHU_APP_ID')
 FEISHU_APP_SECRET= os.getenv('FEISHU_APP_SECRET')
