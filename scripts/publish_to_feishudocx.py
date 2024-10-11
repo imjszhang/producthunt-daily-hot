@@ -211,7 +211,10 @@ class DailyReportGenerator:
         self.feishu_docx_api_handler.create_block(document_id, parent_block_id, [divider_block])
 
 #根据日期，创建一个日报
-def generate_daily_report(date_today):
+def generate_daily_report(today):
+
+    date_today = today.strftime('%Y-%m-%d')
+
     # 初始化 FeishuDocxAPIHandler
     feishu_docx_api_handler = FeishuDocxAPIHandler(FEISHU_APP_ID, FEISHU_APP_SECRET)
     # 创建一个新文档
@@ -274,16 +277,13 @@ def generate_daily_reports(start_date, days):
 def main():
     # 获取今天的日期并格式化
     today = datetime.now(timezone.utc)
-    date_today = today.strftime('%Y-%m-%d')
-
+    
     # 生成今天的日报
-    #generate_daily_report(date_today)
-
-    
-    startdate= today - timedelta(days=5)
-    
+    generate_daily_report(today)
+   
     #生成往前60天的日报
-    generate_daily_reports(startdate, 60)
+    #startdate= today - timedelta(days=0)
+    #generate_daily_reports(startdate, 60)
 
 
 if __name__ == "__main__":
