@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Generate Daily Markdown"]
     types: [completed]
+  workflow_dispatch:  # 手动触发
 
 jobs:
   publish_to_feishu_bitable:
