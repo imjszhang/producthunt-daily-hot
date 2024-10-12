@@ -1,4 +1,4 @@
-# Product Hunt 每日中文热榜 - 自动更新到飞书多维表格
+# Product Hunt 每日中文热榜 - 每天自动同步到飞书和博客
 
 [English](README.en.md) | [中文](README.md)
 
@@ -6,12 +6,14 @@
 
 Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它能够每天定时生成 Product Hunt 上的热门产品榜单 Markdown 文件，并自动提交到 GitHub 仓库中。该项目旨在帮助用户快速查看每日的 Product Hunt 热门榜单，并提供更详细的产品信息。
 
-在原项目基础上,增加了自动更新到飞书多维表格的功能, 以及支持调用Dify的API来替代OPENAI的API。
+在原项目基础上,增加了自动更新到飞书的功能, 以及支持调用Dify的API来替代OPENAI的API。
+
 
 榜单会在每天下午3点自动更新，可以在 [🌐 这里查看](https://sxwqam5d2bh.feishu.cn/docx/S2mTdzFrToxGSjx4aAgc4fDBnjb?from=from_copylink)。
 
 ## 预览
-
+![Preview](./preview_feishu_wiki.gif)
+![Preview](./preview_feishu_bitable.gif)
 ![Preview](./preview.gif)
 
 ## 功能概述
@@ -25,6 +27,8 @@ Product Hunt 每日热榜是一个基于 GitHub Action 的自动化工具，它�
 - **灵活定制**：脚本易于扩展或修改，可以包括额外的产品细节或调整文件格式。
 - **自动发布到 WordPress**：生成的 Markdown 文件可以自动发布到 WordPress 网站。
 - **自动更新到飞书多维表格**：生成的 Markdown 文件可以自动更新到飞书多维表格。
+- **自动生成飞书文档**：生成文件到指定飞书文件夹。
+- **自动生成飞书文档简报**：生成简报在指定的飞书文档里，实现了自动更新飞书知识库。
 
 ## 快速开始
 
@@ -72,6 +76,7 @@ pip install -r requirements.txt
    - `FEISHU_APP_SECRET`: 飞书应用的 Secret
    - `FEISHU_BITABLE_APP_TOKEN`: 飞书多维表格的APP Token
    - `FEISHU_BITABLE_TABLE_ID`: 飞书多维表格的TABLE ID
+   - `FEISHU_DOCX_FOLDER_TOKEN`: 飞书文件夹的TOKEN ID
 
 
 2. **GitHub Actions 工作流：**
@@ -80,7 +85,8 @@ pip install -r requirements.txt
    - `generate_markdown.yml`：生成 Product Hunt 每日热门产品的 Markdown 文件。该工作流每天 UTC 时间 07:01（北京时间 15:01）自动运行，也可以手动触发。
    - `publish_to_wordpress.yml`：自动发布 Markdown 文件到 WordPress 网站。在generate_markdown之后触发，可在里面配置是否启用。
    - `publish_to_feishubitable.yml`：自动发布到飞书多维表格。在generate_markdown之后触发，可在里面配置是否启用。processed_records.json里已存在产品将不会重复发布。
-
+   - `publish_to_feishudocx.yml`：自动创建飞书文档，发布到飞书文件夹里。在generate_markdown之后触发，可在里面配置是否启用。
+   - `update_feishudocx_template.yml`：自动在指定飞书文档里生成简报。在generate_markdown之后触发，可在里面配置是否启用。   
 ### 使用
 
 设置完成后，GitHub Action 将自动生成并提交包含 Product Hunt 每日热门产品的 Markdown 文件，并自动发布到 WordPress 网站和飞书多维表格。文件存储在 `data/` 目录下。
