@@ -181,19 +181,6 @@ class FeishuDocxAPI:
             "Content-Type": "application/json; charset=utf-8"
         }
 
-    """
-    {
-        "code": 0,
-        "msg": "success",
-        "data": {
-            "document": {
-            "document_id": "doxcni6mOy7jLRWbEylaKKC7K88",
-            "revision_id": 1,
-            "title": "undefined"
-            }
-        }
-    }    
-    """
     def create_document(self, title, folder_token=""):
         url = f"{self.base_url}/docx/v1/documents"
         headers = self._get_headers()
@@ -240,7 +227,7 @@ class FeishuDocxAPI:
         response = requests.get(url, headers=headers)
         return response.json()   
       
-    def create_block(self, document_id, block_id, children: list,index=-1):
+    def create_block(self, document_id, block_id, children: list, index=-1):
         url = f"{self.base_url}/docx/v1/documents/{document_id}/blocks/{block_id}/children"
         headers = self._get_headers()
         payload = {
@@ -259,7 +246,7 @@ class FeishuDocxAPI:
         response = requests.patch(url, headers=headers, data=json.dumps(payload))
         return response.json()
     
-    def delete_block(self, document_id, block_id, start_index=0,end_index=1):
+    def delete_block(self, document_id, block_id, start_index=0, end_index=1):
         url = f"{self.base_url}/docx/v1/documents/{document_id}/blocks/{block_id}/children/batch_delete"
         headers = self._get_headers()
         payload = {
@@ -268,6 +255,32 @@ class FeishuDocxAPI:
         }
         
         response = requests.delete(url, headers=headers, data=json.dumps(payload))
+        return response.json()
+
+    def batch_update_blocks(self, document_id, requests_list, document_revision_id=-1, client_token=None, user_id_type="open_id"):
+        """
+        批量更新文档中的块。
+
+        :param document_id: 文档的唯一标识
+        :param requests_list: 批量更新块的请求列表，每个请求包含块的更新信息
+        :param document_revision_id: 要操作的文档版本，默认为 -1 表示最新版本
+        :param client_token: 操作的唯一标识，用于幂等操作
+        :param user_id_type: 用户 ID 类型，默认为 "open_id"
+        :return: 返回批量更新的结果
+        """
+        url = f"{self.base_url}/docx/v1/documents/{document_id}/blocks/batch_update"
+        headers = self._get_headers()
+        
+        # 构建请求体
+        payload = {
+            "requests": requests_list,
+            "document_revision_id": document_revision_id,
+            "client_token": client_token,
+            "user_id_type": user_id_type
+        }
+        
+        # 发送 PATCH 请求
+        response = requests.patch(url, headers=headers, data=json.dumps(payload))
         return response.json()
 
 

@@ -5,10 +5,12 @@ import pytz
 from feishu_docx_api_handler import FeishuDocxAPIHandler, BlockType, BlockBatchUpdateRequestBuilder
 import os
 from dotenv import load_dotenv
-load_dotenv(override=True)
+#load_dotenv(override=True)
 
 FEISHU_APP_ID = os.getenv('FEISHU_APP_ID')
 FEISHU_APP_SECRET= os.getenv('FEISHU_APP_SECRET')
+# 初始化 FeishuDocxAPIHandler
+feishu_docx_api_handler = FeishuDocxAPIHandler(FEISHU_APP_ID, FEISHU_APP_SECRET)
 
 def batch_modify_document_blocks(document_id, blocks, modifications):
     """
@@ -267,59 +269,139 @@ def read_markdown_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-
-# 初始化 FeishuDocxAPIHandler
-feishu_docx_api_handler = FeishuDocxAPIHandler(FEISHU_APP_ID, FEISHU_APP_SECRET)
-
-# 指定要获取的文档 ID
-document_id = "G11zdwZt3oGnZlx8uLhcM3s8nMf"
-document_blocks = feishu_docx_api_handler.get_document_blocks(document_id)
-blocks= document_blocks.get('data', {}).get('items', [])
-
-
-# 主函数
-def main():
-    # 获取今天的日期并格式化
-    today = datetime.now(timezone.utc)
-    startdate = today - timedelta(days=1)
+# 读取并解析 Markdown 文件
+def process_markdown_file_for_date(startdate, block_ids, date_block_id, document_id, blocks):
+    """
+    处理指定日期的 Markdown 文件，生成 report_data 并应用到飞书文档中。
+    :param startdate: 开始日期
+    :param block_ids: 每个项目的 block_id 列表
+    :param date_block_id: 日期块的 block_id
+    :param document_id: 飞书文档的 ID
+    :param blocks: 文档的块信息
+    """
+    # 格式化日期
     startdate_str = startdate.strftime('%Y-%m-%d')
 
     # 获取最新的Markdown文件内容
     file_path = f'data/producthunt-daily-{startdate_str}.md'
     markdown_content = read_markdown_file(file_path)
 
-    # 第一步：从Markdown生成report_data
+    # 从Markdown生成report_data
     report_date = startdate_str
     report_data = parse_markdown_to_feishu_docx(markdown_content, report_date)
 
-    # 第二步：从report_data生成modifications，提取前3个项目
-    top_n = 3  # 你可以修改这个值来控制提取的项目数量
+    # 从report_data生成modifications，提取前3个项目
+    modifications = extract_top_projects_from_report(date_block_id, report_data, block_ids)
 
-    # 预定义的 block_id 数组
-    date_block_id="L6xjdiiwSowA5NxnCFUcoPasn0c"
-    block_ids = [
-        [
-            "QVe0dupb5oagaFx11HBcEzFGnOe", 
-            "Cwh3d5lI1oj8nYxWE9Wc0NFdnNd", 
-            "Futxdju5WoUWvbxeyWlc7HQvnOe", 
-            "CM1dd0FtQoETu9xHA4tcgulynxh"
-        ],
-        [
-            "UGoLdHHyXoY7yixZNbtchrNynnf", 
-            "GZG2dy0GFoCmWZx71lbcWRHgnGe", 
-            "VcbTd3Ya9oLIPPxNaJ3c6CWOnUg", 
-            "I96UdDZ9WoAVXhxiRTrcXU0fnmd"
-        ],
-        [   
-            "URyEdsROfoRji7xnZMZciiHlnEt", 
-            "EPM8d9VD3ofG6mxZDwscMt8Lnjh", 
-            "MYARdNao6ocws6xV3PUcFGmLnah", 
-            "CYHQdbzd0ocwwKxxSKIctenCnCf"
-        ]
-    ]  # 预定义的 block_id 数组
-    modifications = extract_top_projects_from_report(date_block_id, report_data, block_ids, top_n=top_n)
     # 调用批量修改方法
     batch_modify_document_blocks(document_id, blocks, modifications)
+
+
+# 处理多个日期的 Markdown 文件
+def process_multiple_dates(document_id, blocks, date_block_ids, block_ids_list, days_to_process=0):
+    """
+    处理多个日期的 Markdown 文件，并将其内容应用到飞书文档中。
+    :param document_id: 飞书文档的 ID
+    :param blocks: 文档的块信息
+    :param date_block_ids: 每个日期对应的块 ID 列表
+    :param block_ids_list: 每个项目的 block_id 列表
+    :param days_to_process: 要处理的天数
+    """
+    today = datetime.now(timezone.utc)
+
+    for i in range(3):
+        # 获取开始日期
+        startdate = today - timedelta(days=i + days_to_process)
+
+        # 获取对应的 block_id
+        date_block_id = date_block_ids[i]
+        block_ids = block_ids_list[i]
+
+        # 处理指定日期的 Markdown 文件
+        process_markdown_file_for_date(startdate, block_ids, date_block_id, document_id, blocks)
+
+
+# 主函数
+def main():
+
+    # 指定要获取的文档 ID
+    document_id = "S2mTdzFrToxGSjx4aAgc4fDBnjb"
+    document_blocks = feishu_docx_api_handler.get_document_blocks(document_id)
+    blocks = document_blocks.get('data', {}).get('items', [])
+
+    # 预定义的 block_id 数组
+    date_block_ids = [
+        "L2PYd2YnAocH13x5dP0c9S5anGk",  # 第一天的日期块 ID
+        "WeNFdCfZhoKb1sx39Fzclvqqnkb",  # 第二天的日期块 ID
+        "Pfjhdjay4o54UzxEpZ8cEaU0nwd"   # 第三天的日期块 ID
+    ]
+
+    block_ids_list = [
+        [
+            [
+            "DQu8dWOQKoGfH0x07pccVXqBnDc",
+            "UPksdUdI0owjGZxVFszcdFQznjf",
+            "XWlkdXv1WoDxiXxC6uQcofySnhf",
+            "Ih7idClESoKYWcxTq4acaCYPngc"
+            ],
+            [
+            "KjtldZmafoSuOoxRwRccgtmhnth",
+            "REyGd1lUxoSDCvxu16icxpmznLf",
+            "IM5odauOSotDTdxhRmecW9LlnGf",
+            "LjaydEnyto0gtlxmUAPcisGnndh"
+            ],
+            [
+            "Jk98depSKoQHMFxqlxXcCBd0npb",
+            "CWGDdSxp9ouLCZxClJacl48anYd",
+            "X94IdhD86o0yhTxR8RicNZXZnXe",
+            "LbytdSH8Tos9xhx9JrecpOY4nPe"
+            ]
+        ],
+        [
+            [
+            "LXcPduKZFo99SXxUapicphiYndb",
+            "JL2Odru6Mo1kbFx0onvcum4SnGe",
+            "DJvjdOIDEoGDSKxoUSzckEcKnGe",
+            "OBOcd9274o8oZVxmyuEc9Hqnnqv"
+            ],
+            [
+            "YyvCd7AV6ocMtAxsccGccB54npC",
+            "EST7dineBovqT4xQlZWcHzW3nef",
+            "AFnOdLAeZoK9RqxzwWYcOimvnOc",
+            "DaVqdfopRoduaNxiqjlc7hVWnag"
+            ],
+            [
+            "PUtjdu7guob9e5x3xzAcPYdgnZg",
+            "MCmCdjW67oUzrnxl8aAcQhDon8d",
+            "KaujdbRHoo9IiVxpgnqcqUebn2e",
+            "PjfadZe7koDwYkxIli6cn1j7nHh"
+            ]
+        ],
+        [
+            [
+            "GygTdXzXHoYoI4xfhmpcoVMknrg",
+            "QRMydAKMPo9QPgxpfwvciwPVnde",
+            "THIUdjHpDo6MkXxMfLlclkUcnIf",
+            "EmW3d7yKVoiDiYxXDSkcCZconSc"
+            ],
+            [
+            "GZsVdwntsovexqxqu92cpUxgn9g",
+            "ZbavdPa54o8yrpxJ2Kdc1jiMnPg",
+            "S2jDdRFMUottVEx09TgclMDTn9c",
+            "Cy3MdaZMQovDAix2uXOco9MLnZs"
+            ],
+            [
+            "XNgHd7N8JoOD3exYtjDci26En7d",
+            "VBcpdCnYOoFjCGxgJL8cynVqnRd",
+            "VKSud6Hrbogx0MxVEdScA9gnnfe",
+            "VtG1dz4euo9zLfxMaOXc4yGAnIg"
+            ]
+        ]
+    ]
+
+    # 处理最近 3 天的 Markdown 文件
+    process_multiple_dates(document_id, blocks, date_block_ids, block_ids_list, days_to_process=0)
+
 
 if __name__ == "__main__":
     main()
