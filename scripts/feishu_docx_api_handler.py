@@ -18,11 +18,11 @@ class BlockType(Enum):
     ORDERED = (13, "ordered")
     CODE = (14, "code")
     QUOTE = (15, "quote")
-    TODO = (16, "todo")
-    BITABLE = (17, "bitable")
-    CALLOUT = (18, "callout")
-    CHAT_CARD = (19, "chat_card")
-    DIAGRAM = (20, "diagram")
+    TODO = (17, "todo")
+    BITABLE = (18, "bitable")
+    CALLOUT = (19, "callout")
+    CHAT_CARD = (20, "chat_card")
+    DIAGRAM = (21, "diagram")
     DIVIDER = (22, "divider")
     FILE = (23, "file")
     GRID = (24, "grid")
@@ -167,6 +167,188 @@ class BlockFactory:
             }
         }
 
+class BlockBatchUpdateRequestBuilder:
+    def __init__(self):
+        self.requests = []
+
+    def add_update_text_elements(self, block_id, text_elements):
+        """
+        添加更新文本元素的请求
+        :param block_id: 块的唯一标识
+        :param text_elements: 更新后的文本元素列表
+        """
+        request = {
+            "block_id": block_id,
+            "update_text_elements": {
+                "elements": text_elements
+            }
+        }
+        self.requests.append(request)
+
+    def add_update_text(self, block_id, text_runs, text_style=None):
+        """
+        添加更新文本内容的请求
+        :param block_id: 块的唯一标识
+        :param text_runs: 文本内容列表，每个文本内容是一个字典，包含 content 和 text_element_style
+        :param text_style: 可选的文本样式
+        """
+        elements = []
+        for text_run in text_runs:
+            content = text_run.get("content", "")
+            text_element_style = text_run.get("text_element_style", {})
+            elements.append({
+                "text_run": {
+                    "content": content,
+                    "text_element_style": text_element_style
+                }
+            })
+
+        request = {
+            "block_id": block_id,
+            "update_text_elements": {
+                "elements": elements
+            }
+        }
+
+        if text_style:
+            request["update_text_elements"]["style"] = text_style
+
+        self.requests.append(request)
+
+    def add_update_table_property(self, block_id, table_property):
+        """
+        添加更新表格属性的请求
+        :param block_id: 块的唯一标识
+        :param table_property: 表格属性
+        """
+        request = {
+            "block_id": block_id,
+            "update_table_property": table_property
+        }
+        self.requests.append(request)
+
+    def add_insert_table_row(self, block_id, row_index, row_data):
+        """
+        添加插入表格行的请求
+        :param block_id: 块的唯一标识
+        :param row_index: 插入行的索引
+        :param row_data: 插入行的数据
+        """
+        request = {
+            "block_id": block_id,
+            "insert_table_row": {
+                "row_index": row_index,
+                "row_data": row_data
+            }
+        }
+        self.requests.append(request)
+
+    def add_insert_table_column(self, block_id, column_index, column_data):
+        """
+        添加插入表格列的请求
+        :param block_id: 块的唯一标识
+        :param column_index: 插入列的索引
+        :param column_data: 插入列的数据
+        """
+        request = {
+            "block_id": block_id,
+            "insert_table_column": {
+                "column_index": column_index,
+                "column_data": column_data
+            }
+        }
+        self.requests.append(request)
+
+    def add_delete_table_rows(self, block_id, row_indices):
+        """
+        添加删除表格行的请求
+        :param block_id: 块的唯一标识
+        :param row_indices: 要删除的行索引列表
+        """
+        request = {
+            "block_id": block_id,
+            "delete_table_rows": {
+                "row_indices": row_indices
+            }
+        }
+        self.requests.append(request)
+
+    def add_delete_table_columns(self, block_id, column_indices):
+        """
+        添加删除表格列的请求
+        :param block_id: 块的唯一标识
+        :param column_indices: 要删除的列索引列表
+        """
+        request = {
+            "block_id": block_id,
+            "delete_table_columns": {
+                "column_indices": column_indices
+            }
+        }
+        self.requests.append(request)
+
+    def add_merge_table_cells(self, block_id, cell_ranges):
+        """
+        添加合并表格单元格的请求
+        :param block_id: 块的唯一标识
+        :param cell_ranges: 要合并的单元格范围
+        """
+        request = {
+            "block_id": block_id,
+            "merge_table_cells": {
+                "cell_ranges": cell_ranges
+            }
+        }
+        self.requests.append(request)
+
+    def add_unmerge_table_cells(self, block_id, cell_ranges):
+        """
+        添加取消合并表格单元格的请求
+        :param block_id: 块的唯一标识
+        :param cell_ranges: 要取消合并的单元格范围
+        """
+        request = {
+            "block_id": block_id,
+            "unmerge_table_cells": {
+                "cell_ranges": cell_ranges
+            }
+        }
+        self.requests.append(request)
+
+    def add_replace_image(self, block_id, image_key):
+        """
+        添加替换图片的请求
+        :param block_id: 块的唯一标识
+        :param image_key: 新图片的 key
+        """
+        request = {
+            "block_id": block_id,
+            "replace_image": {
+                "image_key": image_key
+            }
+        }
+        self.requests.append(request)
+
+    def add_replace_file(self, block_id, file_key):
+        """
+        添加替换文件的请求
+        :param block_id: 块的唯一标识
+        :param file_key: 新文件的 key
+        """
+        request = {
+            "block_id": block_id,
+            "replace_file": {
+                "file_key": file_key
+            }
+        }
+        self.requests.append(request)
+
+    def build(self):
+        """
+        构建最终的批量更新请求
+        :return: 批量更新请求列表
+        """
+        return self.requests
 
 class FeishuDocxAPIHandler:
     def __init__(self, FEISHU_APP_ID, FEISHU_APP_SECRET):
@@ -264,3 +446,20 @@ class FeishuDocxAPIHandler:
         :return: 删除块的响应
         """
         return self.feishu_docx_api.delete_block(document_id, block_id, start_index, end_index)
+
+    def batch_update_blocks(self, document_id, requests_list, document_revision_id=-1, client_token=None, user_id_type="open_id"):
+        """
+        批量更新文档中的块
+        :param document_id: 文档 ID
+        :param requests_list: 批量更新块的请求列表，每个请求包含块的更新信息
+        :param document_revision_id: 要操作的文档版本，默认为 -1 表示最新版本
+        :param client_token: 操作的唯一标识，用于幂等操作
+        :param user_id_type: 用户 ID 类型，默认为 "open_id"
+        :return: 批量更新块的响应
+        """
+        response = self.feishu_docx_api.batch_update_blocks(document_id, requests_list, document_revision_id, client_token, user_id_type)
+        if response.get('code') == 0:
+            print("批量更新成功")
+        else:
+            print(f"批量更新失败: {response.get('msg')}")
+        return response
