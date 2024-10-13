@@ -284,6 +284,7 @@ class FeishuDocxAPI:
         return response.json()
 
 
+
 class FeishuBitableAPI:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -294,7 +295,6 @@ class FeishuBitableAPI:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json; charset=utf-8"
         }
-
 
     def create_bitable(self, name, folder_token=""):
         url = f"{self.base_url}/bitable/v1/apps"
@@ -327,7 +327,7 @@ class FeishuBitableAPI:
         record=result.get('data', {}).get('items', [{}])[0].get('fields', {})
         return record
 
-    def get_record_list(self, app_token, table_id, args: list,page_token=""):
+    def get_record_list(self, app_token, table_id, args: list, page_token=""):
         url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/search?page_token={page_token}"
         headers = self._get_headers()
         
@@ -336,35 +336,140 @@ class FeishuBitableAPI:
         response = requests.post(url, headers=headers, data=json.dumps(payload))
         return response.json()    
 
-
-    def create_record(self, app_token, table_id, fields:list):
+    def create_record(self, app_token, table_id, fields: list):
         url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records"
         headers = self._get_headers()
         payload = {
             "fields": fields,
-
         }
         
         response = requests.post(url, headers=headers, data=json.dumps(payload))
         return response.json()
 
-    def update_record(self, app_token, table_id, record_id, fields:list):
+    def update_record(self, app_token, table_id, record_id, fields: list):
         url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/{record_id}"
         headers = self._get_headers()
         payload = {
             "fields": fields,
-
         }
         
         response = requests.put(url, headers=headers, data=json.dumps(payload))
         return response.json()
-    
 
     def delete_record(self, app_token, table_id, record_id):
         url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/{record_id}"
         headers = self._get_headers()
         
         response = requests.delete(url, headers=headers)
+        return response.json()
+
+    def batch_create_records(self, app_token, table_id, records, user_id_type="open_id", client_token=None):
+        """
+        批量创建多维表格记录
+
+        :param app_token: str, 多维表格的唯一标识符
+        :param table_id: str, 多维表格数据表的唯一标识符
+        :param records: list, 本次请求将要新增的记录列表
+        :param user_id_type: str, 用户 ID 类型，默认为 "open_id"
+        :param client_token: str, 幂等操作的唯一标识符，默认为 None
+        :return: dict, API 响应结果
+        """
+        url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/batch_create"
+        headers = self._get_headers()
+
+        # 构建请求体
+        payload = {
+            "records": records
+        }
+
+        # 如果提供了 user_id_type 或 client_token，则添加到查询参数中
+        params = {
+            "user_id_type": user_id_type
+        }
+        if client_token:
+            params["client_token"] = client_token
+
+        # 发送 POST 请求
+        response = requests.post(url, headers=headers, params=params, data=json.dumps(payload))
+        return response.json()
+
+    def batch_update_records(self, app_token, table_id, records, user_id_type="open_id"):
+        """
+        批量更新多维表格中的记录
+
+        :param app_token: str, 多维表格的唯一标识符
+        :param table_id: str, 多维表格数据表的唯一标识符
+        :param records: list, 本次请求将要更新的记录列表
+        :param user_id_type: str, 用户 ID 类型，默认为 "open_id"
+        :return: dict, API 响应结果
+        """
+        url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/batch_update"
+        headers = self._get_headers()
+
+        # 构建请求体
+        payload = {
+            "records": records
+        }
+
+        # 构建查询参数
+        params = {
+            "user_id_type": user_id_type
+        }
+
+        # 发送 POST 请求
+        response = requests.post(url, headers=headers, params=params, data=json.dumps(payload))
+        return response.json()
+
+    def batch_get_records(self, app_token, table_id, record_ids, user_id_type="open_id", with_shared_url=False, automatic_fields=False):
+        """
+        批量获取多维表格中的记录信息
+
+        :param app_token: str, 多维表格的唯一标识符
+        :param table_id: str, 多维表格数据表的唯一标识符
+        :param record_ids: list, 记录 ID 列表，最多支持 100 条记录
+        :param user_id_type: str, 用户 ID 类型，默认为 "open_id"
+        :param with_shared_url: bool, 是否返回记录的分享链接，默认为 False
+        :param automatic_fields: bool, 是否返回自动计算的字段，默认为 False
+        :return: dict, API 响应结果
+        """
+        url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/batch_get"
+        headers = self._get_headers()
+
+        # 构建请求体
+        payload = {
+            "record_ids": record_ids,
+            "with_shared_url": with_shared_url,
+            "automatic_fields": automatic_fields
+        }
+
+        # 构建查询参数
+        params = {
+            "user_id_type": user_id_type
+        }
+
+        # 发送 POST 请求
+        response = requests.post(url, headers=headers, params=params, data=json.dumps(payload))
+        return response.json()
+
+    def batch_delete_records(self, app_token, table_id, record_ids):
+        """
+        批量删除多维表格中的记录
+
+        :param app_token: str, 多维表格的唯一标识符
+        :param table_id: str, 多维表格数据表的唯一标识符
+        :param record_ids: list, 要删除的记录 ID 列表，最多支持 500 条记录
+        :return: dict, API 响应结果
+        """
+        url = f"{self.base_url}/bitable/v1/apps/{app_token}/tables/{table_id}/records/batch_delete"
+        headers = self._get_headers()
+
+        # 构建请求体
+        payload = {
+            "records": record_ids
+        }
+
+        # 发送 POST 请求
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
         return response.json()
 
 
