@@ -1,4 +1,4 @@
-name: Update Feishu Document Template
+name: Publish to Feishu Document
 
 on:
   workflow_run:
@@ -33,5 +33,6 @@ jobs:
       env:
         FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
         FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        FEISHU_DOCX_FOLDER_TOKEN: ${{ secrets.FEISHU_DOCX_FOLDER_TOKEN }}
       run: |
-        python scripts/update_feishudocx_template.py
+        python scripts/publish_to_feishu_docx.py

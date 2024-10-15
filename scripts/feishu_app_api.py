@@ -20,91 +20,31 @@ class FeishuDriveAPI:
             "Content-Type": "application/json; charset=utf-8"
         }
 
-    def get_root_folder_meta(self):
-        """
-        获取我的空间（根文件夹）的元数据
-        :return: 根文件夹的元数据
-        """
-        url = f"{self.base_url}/drive/explorer/v2/root_folder/meta"
-        headers = self._get_headers()
-        response = requests.get(url, headers=headers)
-        return response.json()
-
-    def get_folder_files(self, folder_token):
+    def get_folder_files(self, folder_token="", page_size=50, page_token=None, order_by="EditedTime", direction="DESC", user_id_type="open_id"):
         """
         获取文件夹中的文件清单
-        :param folder_token: 文件夹的 token
+        :param folder_token: 文件夹的 token，不填写或为空字符串时获取根目录下的文件
+        :param page_size: 每页显示的数据项数量，最大值为200，默认50
+        :param page_token: 分页标记，第一次请求不填，表示从头开始遍历
+        :param order_by: 定义清单中文件的排序方式，默认按编辑时间排序
+        :param direction: 定义清单中文件的排序规则，默认降序
+        :param user_id_type: 用户 ID 类型，默认 open_id
         :return: 文件夹中的文件清单
         """
-        url = f"{self.base_url}/drive/v1/files?folder_token={folder_token}"
+        url = f"{self.base_url}/drive/v1/files"
         headers = self._get_headers()
-        response = requests.get(url, headers=headers)
-        return response.json()
-
-    def get_folder_meta(self, folder_token):
-        """
-        获取文件夹的元数据
-        :param folder_token: 文件夹的 token
-        :return: 文件夹的元数据
-        """
-        url = f"{self.base_url}/drive/explorer/v2/folder/{folder_token}/meta"
-        headers = self._get_headers()
-        response = requests.get(url, headers=headers)
-        return response.json()
-
-    def create_folder(self, folder_name, parent_folder_token=""):
-        """
-        新建文件夹
-        :param folder_name: 新建文件夹的名称
-        :param parent_folder_token: 父文件夹的 token，默认为根文件夹
-        :return: 新建文件夹的元数据
-        """
-        url = f"{self.base_url}/drive/v1/files/create_folder"
-        headers = self._get_headers()
-        payload = {
-            "name": folder_name,
-            "folder_token": parent_folder_token
+        params = {
+            "folder_token": folder_token,
+            "page_size": page_size,
+            "order_by": order_by,
+            "direction": direction,
+            "user_id_type": user_id_type
         }
-        response = requests.post(url, headers=headers, data=json.dumps(payload))
-        return response.json()
+        if page_token:
+            params["page_token"] = page_token
 
-    def move_file_or_folder(self, file_token, target_folder_token):
-        """
-        移动文件或文件夹
-        :param file_token: 文件或文件夹的 token
-        :param target_folder_token: 目标文件夹的 token
-        :return: 移动操作的结果
-        """
-        url = f"{self.base_url}/drive/v1/files/{file_token}/move"
-        headers = self._get_headers()
-        payload = {
-            "target_folder_token": target_folder_token
-        }
-        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        response = requests.get(url, headers=headers, params=params)
         return response.json()
-
-    def delete_file_or_folder(self, file_token):
-        """
-        删除文件或文件夹
-        :param file_token: 文件或文件夹的 token
-        :return: 删除操作的结果
-        """
-        url = f"{self.base_url}/drive/v1/files/{file_token}"
-        headers = self._get_headers()
-        response = requests.delete(url, headers=headers)
-        return response.json()
-
-    def check_task_status(self, task_id):
-        """
-        查询异步任务状态
-        :param task_id: 异步任务的 ID
-        :return: 任务状态
-        """
-        url = f"{self.base_url}/drive/v1/files/task_check?task_id={task_id}"
-        headers = self._get_headers()
-        response = requests.get(url, headers=headers)
-        return response.json()
-
 
 class FeishuWikiAPI:
     def __init__(self, api_key):
