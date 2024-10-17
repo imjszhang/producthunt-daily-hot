@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 FEISHU_APP_ID = os.getenv('FEISHU_APP_ID')
 FEISHU_APP_SECRET= os.getenv('FEISHU_APP_SECRET')
-FEISHU_DOCX_FOLDER_TOKEN = os.getenv('FEISHU_DOCX_FOLDER_TOKEN')
+
 
 # 初始化 FeishuDocxAPIHandler
 feishu_docx_api_handler = FeishuDocxAPIHandler(FEISHU_APP_ID, FEISHU_APP_SECRET)
@@ -23,8 +23,7 @@ def get_file_url_by_date(date_str):
     """
     根据日期，获取文件夹里特定名字的文件
     """
-    folder_token=FEISHU_DOCX_FOLDER_TOKEN
-    print(f"获取文件夹 {folder_token} 里名字为 {date_str} 的文件")
+    folder_token="M7WrfGfuJlmobBdXmejcd7lsnTc"
     name = f"producthunt-daily-{date_str}"  # 使用 f-string 格式化日期
     file_list, _ = feishu_drive_api_handler.get_folder_files(folder_token, page_size=10)  # 解包元组，忽略第二个元素
     
