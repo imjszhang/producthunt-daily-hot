@@ -24,6 +24,7 @@ def get_file_url_by_date(date_str):
     根据日期，获取文件夹里特定名字的文件
     """
     folder_token=FEISHU_DOCX_FOLDER_TOKEN
+    print(f"获取文件夹 {folder_token} 里名字为 {date_str} 的文件")
     name = f"producthunt-daily-{date_str}"  # 使用 f-string 格式化日期
     file_list, _ = feishu_drive_api_handler.get_folder_files(folder_token, page_size=10)  # 解包元组，忽略第二个元素
     
@@ -202,7 +203,6 @@ def extract_top_projects_from_report(date_block_id, file_block_id, report_data, 
     允许通过 top_n 参数指定提取的项目数量，并通过 block_ids 数组为每个项目动态分配 block_id。
     """
     file= get_file_url_by_date(report_data["date"])
-    print(file) 
 
     modifications = [
         # 日期块
