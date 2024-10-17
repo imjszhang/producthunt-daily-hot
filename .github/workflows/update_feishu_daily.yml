@@ -28,7 +28,7 @@ jobs:
         pip install pytz
         pip install requests
 
-    - name: Publish to Feishu Document
+    - name: Update Feishu Document Daily
       if: ${{ env.PUBLISH_ENABLED == 'true' }}  
       env:
         FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
