@@ -201,7 +201,8 @@ def extract_top_projects_from_report(date_block_id, file_block_id, report_data, 
     从 parse_markdown_to_feishu_docx 函数的输出中提取内容，并生成飞书文档的修改列表。
     允许通过 top_n 参数指定提取的项目数量，并通过 block_ids 数组为每个项目动态分配 block_id。
     """
-    file= get_file_url_by_date(report_data["date"]) 
+    file= get_file_url_by_date(report_data["date"])
+    print(file) 
 
     modifications = [
         # 日期块
