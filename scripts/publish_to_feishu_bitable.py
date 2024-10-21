@@ -162,6 +162,13 @@ def parse_markdown_to_records(content):
         for i, line in enumerate(lines):
             if line.startswith('## '):  # 产品名称和链接
                 product_name_with_link = line[3:]
+                
+                # 提取编号
+                match = re.search(r'^\[(\d+)\.\s*', product_name_with_link)
+                if match:
+                    product_number = match.group(1)  # 获取编号
+                    record['推送编号'] = product_number  # 将编号存入记录
+
                 product_name = re.sub(r'^\[\d+\.\s*', '[', product_name_with_link)  # 去掉序号
                 product_name = product_name.split('](')[0].strip('[')
                 product_link = line.split('](')[1].strip(')')
