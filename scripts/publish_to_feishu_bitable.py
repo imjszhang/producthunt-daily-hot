@@ -152,7 +152,7 @@ def parse_markdown_to_records(content):
     """
     records = []
     products = content.split('---')  # 每个产品用 "---" 分隔
-
+    product_number = 1  # 产品编号
     for product in products:
         lines = product.strip().splitlines()
         if not lines:
@@ -163,11 +163,8 @@ def parse_markdown_to_records(content):
             if line.startswith('## '):  # 产品名称和链接
                 product_name_with_link = line[3:]
                 
-                # 提取编号
-                match = re.search(r'^\[(\d+)\.\s*', product_name_with_link)
-                if match:
-                    product_number = match.group(1)  # 获取编号
-                    record['推送编号'] = product_number  # 将编号存入记录
+
+                record['推送编号'] = int(product_number)  # 将编号存入记录
 
                 product_name = re.sub(r'^\[\d+\.\s*', '[', product_name_with_link)  # 去掉序号
                 product_name = product_name.split('](')[0].strip('[')
@@ -225,9 +222,11 @@ def parse_markdown_to_records(content):
                 else:
                     # 如果没有匹配到日期，保留原始的发布时间
                     record['发布时间'] = raw_date
+        product_number=product_number+1
 
         if record:
             records.append(record)
+
 
     return records
 
