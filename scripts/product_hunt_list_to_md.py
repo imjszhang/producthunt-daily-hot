@@ -2,7 +2,7 @@ import os
 try:
     from dotenv import load_dotenv
     # 加载 .env 文件
-    load_dotenv()
+    load_dotenv(override=True)
 except ImportError:
     # 在 GitHub Actions 等环境中，环境变量已经设置好，不需要 dotenv
     print("dotenv 模块未安装，将直接使用环境变量")
@@ -17,14 +17,23 @@ from urllib3.util.retry import Retry
 
 # 创建 OpenAI 客户端实例
 api_key = os.getenv('OPENAI_API_KEY')
+openai_base_url = os.getenv('OPENAI_BASE_URL')  # 新增：从环境变量获取base URL
+openai_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')  # 新增：从环境变量获取模型，默认使用gpt-4o-mini
+
 if not api_key:
     print("警告: 未设置 OPENAI_API_KEY 环境变量，将无法使用 OpenAI 服务")
     client = None
 else:
     openai.api_key = api_key
     try:
-        client = openai.Client(api_key=api_key)  # 新版本的客户端初始化方式
-        print("成功初始化 OpenAI 客户端")
+        # 支持自定义base URL和模型
+        client_params = {"api_key": api_key}
+        if openai_base_url:
+            client_params["base_url"] = openai_base_url
+            print(f"使用自定义OpenAI base URL: {openai_base_url}")
+        
+        client = openai.Client(**client_params)
+        print(f"成功初始化 OpenAI 客户端，使用模型: {openai_model}")
     except Exception as e:
         print(f"初始化 OpenAI 客户端失败: {e}")
         client = None
@@ -101,7 +110,7 @@ class Product:
             try:
                 print(f"正在为 {self.name} 生成关键词...")
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=openai_model,
                     messages=[
                         {"role": "system", "content": "Generate suitable Chinese keywords based on the product information provided. The keywords should be separated by commas."},
                         {"role": "user", "content": prompt},
@@ -134,7 +143,7 @@ class Product:
             try:
                 print(f"正在翻译 {self.name} 的内容...")
                 response = client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=openai_model,
                     messages=[
                         {"role": "system", "content": "你是世界上最专业的翻译工具，擅长英文和中文互译。你是一位精通英文和中文的专业翻译，尤其擅长将IT公司黑话和专业词汇翻译成简洁易懂的地道表达。你的任务是将以下内容翻译成地道的中文，风格与科普杂志或日常对话相似。"},
                         {"role": "user", "content": text},
